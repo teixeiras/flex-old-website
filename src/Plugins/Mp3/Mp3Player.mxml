@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="utf-8"?>
+<fl:WindowsBase xmlns:mx="http://www.adobe.com/2006/mxml" xmlns:fl="SO.Desktop.Window.*" width="100%" height="100%" creationComplete="{init();}" xmlns:fx="Plugins.Mp3.*" 
+	SizeX="300" SizeY="300">
+	<mx:Script>
+		<![CDATA[
+			import mx.utils.ObjectUtil;
+            
+            // Play & Pause Icons
+			[Embed(source="assets/IconPause.png")] [Bindable] public var iconPause:Class;
+			[Embed(source="assets/IconPlay.png")] [Bindable] public var iconPlay:Class;
+
+			private var sound:Sound;						// Mp3 File 
+			private var soundChannel:SoundChannel;			// Reference to playing channel 
+			private var pausePosition:Number;				// Current play position (time)
+			private var percent:Number;						// Current played percentage
+			private var isPlaying:Boolean = false;			// Is the mp3 playing?
+			private var isLoaded:Boolean = false;			// Is the mp3 loaded?
+			private var updateSeek:Timer = new Timer(500);	// Timer for updating the seek bar
+	        		
+			private function init():void { 
+				// Create and add a blur filter for the visualizer
+				var myFilters:Array = new Array();
+				myFilters.push(new BlurFilter(0,0,0));
+													
+				// Add event listener for seek bar updater & start timer							
+	            updateSeek.addEventListener(TimerEvent.TIMER, updatePosition);
+	            updateSeek.start();
+	            
+	            // Add mouse click listener for the seek bar
+	            seekBar.addEventListener(MouseEvent.CLICK, seek);
+				
+				// Add event listener that blurs the visualization
+				viz.addEventListener("beforeVisualization", vizFade);
+			}
+
+			// Once the song is loaded...
+			private function songLoaded(e:Event):void {
+				// Hide status text
+				loadProgress.visible = false;
+				
+				// Remove load event listener
+				sound.removeEventListener(Event.COMPLETE, songLoaded);
+				
+				// Turn on seek bar
+				enableSeek();
+				
+				// Play the song
+				soundChannel = sound.play(0);
+                				
+                // Pull the title/artist/album from the ID3 tags and display
+				theTitle.text = sound.id3.TIT2;				
+				theArtistAlbum.text = sound.id3.artist
+				if (sound.id3.album.length > 0) theArtistAlbum.text += " on " + sound.id3.album;
+				
+				// Song is loaded
+				isLoaded = true;
+			}
+			
+			// Enabled the seek (progress) bar
+			public function enableSeek():void {
+				seekBar.enabled = true;
+				seekBar.visible = true;
+			}			
+			
+			// Add a color transform to the visulization to create the fade effect
+			private function vizFade(e:Event):void {
+				e.target.bitmapData.colorTransform(
+					e.target.bitmapData.rect, new ColorTransform(0.75,0.75,0.75,.75));
+			}
+		
+			// Called when the seek (progress) bar needs updating
+			private function updatePosition(e:Event):void {
+	 			// Is a song playing?
+	 			if(isPlaying) { 
+	 				// If the position is beyond the song start, calculate & set the percentage
+	 				percent = soundChannel.position > 0 ? (soundChannel.position/sound.length)*100 : 0;
+					seekBar.setProgress(percent,100);
+		   			
+		   			// Tell the seekbar to redraw itself
+		   			seekBar.validateNow();
+		   		}
+			}
+	
+			// Play or Pause button has been clicked
+			private function playPause(e:Event = null):void  {
+				// Song playing?
+				if(isPlaying) {
+					// Save the current position in the track, stop playback, change button icon
+					pausePosition = soundChannel.position;
+					soundChannel.stop();
+					playPauseBtn.source = iconPlay;
+					// If the URL has been changed but not loaded, hide seekbar
+					if (!isLoaded) seekBar.visible = false;
+				// Song is not playing?
+				} else {
+					if(!isLoaded) {
+						// If the song isn't loaded yet, set up a new sound load request
+						sound = new Sound();
+						sound.load(new URLRequest(theURL.text));
+						// Add an event listener to check for song load complete event
+						sound.addEventListener(Event.COMPLETE, songLoaded);
+						// Show text for loading song and add event listener for updating
+						sound.addEventListener(ProgressEvent.PROGRESS, updateStatus);
+						loadProgress.visible=true;
+						loadProgress.text = "0";
+					} else {
+						// The song IS loaded, so play it
+						soundChannel = sound.play(pausePosition);
+					}
+					// Change the button icon to the pause style
+					playPauseBtn.source = iconPause;
+				}
+				// Regardless of playing state, change it now to the opposite
+				isPlaying = !isPlaying;
+			}
+			
+			private function updateStatus(e:ProgressEvent):void {
+				loadProgress.text = Math.round((e.bytesLoaded / e.bytesTotal) * 100).toString();
+			}
+			
+			// Mouse click event on the seekbar calls this function
+			private function seek(e:MouseEvent):void {
+				// Is the song playing AND is the seekbar enabled and visible?
+				if(isPlaying && seekBar.enabled) { 
+					// Stop playing at current position, change to new location, continue playing
+					soundChannel.stop();
+					pausePosition = (seekBar.contentMouseX/seekBar.width)*sound.length;
+					soundChannel = sound.play(pausePosition);
+				}
+			}
+		]]>
+	</mx:Script>
+
+	<!-- Visual Layout -->
+	<mx:Fade id="FadeIn" duration="3000" alphaFrom="0.0" alphaTo="1.0"/>	
+	<mx:Fade id="FadeOut" duration="3000" alphaFrom="1.0" alphaTo="0.0"/>
+	
+	<mx:VBox width="100%" verticalGap="0">
+		<mx:Form paddingTop="0" paddingBottom="0" paddingLeft="5" verticalGap="0">
+			<mx:Label id="theTitle" text="Press Play" fontWeight="bold" fontSize="20" paddingBottom="0"/>
+			<mx:Label id="theArtistAlbum" text="or enter a new URL to load below" fontStyle="italic"/>
+		</mx:Form>
+		<mx:Canvas width="100%">
+			<mx:Text id="loadProgress" showEffect="{FadeIn}" hideEffect="{FadeOut}" fontStyle="italic" horizontalCenter="0" verticalCenter="0"/>
+			<fx:Visualization id="viz" type="bars" bars="96" channel="stereo" width="100%" height="50" audioFillColor="0xFFFFFF" audioLineColor="0xFFFFFF"/>						
+		</mx:Canvas>
+		<mx:Form width="100%" paddingBottom="2" paddingTop="0" paddingRight="2" paddingLeft="2">
+			<mx:TextInput borderStyle="solid" borderColor="#cccccc" width="100%" id="theURL" text="http://forum.internaldrive.com/files/vlog/FlexMp3/assets/01_BeastieBoys_NowGetBusy.mp3" fontWeight="normal" change="{isLoaded=false;}"/>		
+		</mx:Form>
+		<mx:ControlBar width="100%" horizontalGap="0">
+			<mx:Image id="playPauseBtn" click="{playPause(event)}" source="{iconPlay}" width="24"/>
+			<mx:ProgressBar showEffect="{FadeIn}" height="16" width="100%" enabled="false" visible="false" mode="manual" id="seekBar" label="" indeterminate="false" labelPlacement="center"/>
+		</mx:ControlBar>
+	</mx:VBox>
+</fl:WindowsBase>

@@ -1,0 +1,287 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 
+Action Script 3/Flex IRC Client Implementation 
+Copyright (C) 2007 Leon Oosterwijk
+
+
+This program is free software; you can redistribute it and/or
+modify it under the terms of the GNU General Public License
+as published by the Free Software Foundation; either version 2
+of the License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+-->
+<fx:WindowsBase xmlns:mx="http://www.adobe.com/2006/mxml" xmlns:fx="SO.Desktop.Window.*"   creationComplete="setCallbackFunctions();initCollections();" xmlns:ns1="*"
+	width="100%" height="100%" SizeX="300" SizeY="300">
+	<mx:Script>
+		<![CDATA[
+			import Plugins.irc.client.JoinChannelDialog;
+			import Plugins.irc.client.PrivateMessageDialog;
+			import Plugins.irc.client.ConnectWindow;
+			import Plugins.irc.client.ChannelWindow;
+			import com.oosterwijk.irc.event.ServerEvent;
+			import mx.managers.PopUpManager;
+
+			import com.oosterwijk.irc.event.UserEvent;
+			import com.oosterwijk.irc.event.IrcEvent;
+			import com.oosterwijk.irc.event.ChannelEvent;
+			import com.oosterwijk.irc.FlexIrcClient;
+			import com.oosterwijk.irc.User;
+			import mx.containers.Canvas;
+            import mx.controls.Alert;
+            import mx.collections.*;
+			import mx.core.UIComponent;
+            import mx.events.MenuEvent;
+			import mx.messaging.errors.ChannelError;
+
+			[Bindable]
+			public var flexIrcClient:FlexIrcClient = new FlexIrcClient();
+			
+			[Bindable]
+			public var connected:Boolean = false;
+
+			internal function sendCommand():void
+			{
+				if (cmdLine.text != "")
+				{
+					flexIrcClient.sendRawLine(cmdLine.text);
+					cmdLine.text = "";
+				}
+					
+			}
+			
+			internal static  var YES_STRING:String = "Yes";
+			internal static  var NO_STRING:String = "No";
+			internal static function YesNoFormat(val:Boolean):String
+			{
+				if (val)
+					return Irc.YES_STRING;
+				else
+					return Irc.NO_STRING;
+			}
+			
+			internal var connectWindow:ConnectWindow = null; 
+			internal var joinChannelDialog:JoinChannelDialog = null; 
+			internal var privateMessageDialog:PrivateMessageDialog = null; 
+			
+			internal function buildNewChannelUI(channel:String):UIComponent
+			{
+		    	var channelWindow:ChannelWindow = new ChannelWindow();
+		    	channelWindow.label = channel;
+		    	channelWindow.channel = channel;
+		    	channelWindow.flexIrcClient = this.flexIrcClient;
+		    	channelWindow.registerListeners(this.flexIrcClient);
+				return channelWindow;
+				
+			}
+			
+			internal function setCallbackFunctions():void
+			{
+				flexIrcClient.setVerbose(true);
+				flexIrcClient.addEventListener(FlexIrcClient.JOIN_EVENT,this.onJoin);
+				flexIrcClient.addEventListener(FlexIrcClient.CONNECT_EVENT,this.onConnect);
+				flexIrcClient.addEventListener(FlexIrcClient.NOTICE_EVENT,this.onNotice);
+				flexIrcClient.addEventListener(FlexIrcClient.DISCONNECT_EVENT,this.onDisconnect);
+				flexIrcClient.addEventListener(FlexIrcClient.NICK_ALREADY_IN_USE_EVENT,this.onNickNameAlreadyInUse);
+				flexIrcClient.addEventListener(FlexIrcClient.IRC_CONNECTION_ERROR_EVENT,this.onConnectionError);
+				flexIrcClient.addEventListener(FlexIrcClient.PRIVATE_MESSAGE_EVENT,this.onPrivateMessage);
+				flexIrcClient.addEventListener(FlexIrcClient.NOTICE_EVENT,this.onNotice);
+				flexIrcClient.addEventListener(FlexIrcClient.NICK_CHANGE_EVENT,this.onNickChange);
+				flexIrcClient.addEventListener(FlexIrcClient.SERVER_RESPONSE_EVENT,this.onServerResponse);
+//				flexIrcClient.addEventListener(FlexIrcClient.ACTION_EVENT,this.onAction);
+				var x:XMLList = this.menubarXML.children();
+
+			}
+
+			/* START OF IRC Event Handlers */
+		    protected function onJoin(event:ChannelEvent):void 
+		    {
+				var channel:String = event.channel;
+				var sender:String = event.sender;
+				var login:String = event.login
+				var hostname:String = event.hostname
+		    	
+		    	var myNick:String = flexIrcClient.getNick();
+		    	if (sender == myNick)
+					channelViewStack.addChild(this.buildNewChannelUI(channel));
+				else
+					addLogEntry(sender + " joined channel: " + channel + ".\n");
+					
+		    }
+		    
+		    protected function onConnect(event:IrcEvent):void 
+		    {
+		    	this.connected = true;
+				addLogEntry("Connected.\n");
+				//PopUpManager.removePopUp(connectWindow);
+				this.toggleConnectionMode(true);
+
+		    }
+		    
+		    
+		    protected function onDisconnect(event:IrcEvent):void 
+		    {
+		    	this.connected = false;
+				addLogEntry("Disconnected.\n");
+				cleanupViewStack();
+		    	this.toggleConnectionMode(false);
+		    }
+		 
+
+		    protected function onNickNameAlreadyInUse(event:IrcEvent):void 
+		    {
+		    	this.connected = false;
+				addLogEntry("Nickname already in use. Disconnecting. . .\n");
+				cleanupViewStack();
+		    	this.toggleConnectionMode(false);
+		    }
+		    
+		    protected function onConnectionError(event:ServerEvent):void 
+		    {
+		    	this.connected = false;
+				addLogEntry(event.response + "\n");
+				addLogEntry("Server Reports an error. Disconnecting. . .\n");
+				cleanupViewStack();
+		    	this.toggleConnectionMode(false);
+		    }
+		    
+		    protected function onServerResponse(event:IrcEvent):void 
+		    {
+		    	var serverEvent:ServerEvent = event as ServerEvent;
+				addLogEntry(serverEvent.code + " " + serverEvent.response + "\n");
+		    }
+		    
+		    
+		    protected function onPrivateMessage(event:UserEvent):void 
+		    {
+				addLogEntry(event.sender + " says: " + event.message + "\n");
+		    }
+		    protected function onAction(sender:String, login:String,hostname:String,target:String, action:String):void 
+		    {
+				addLogEntry(sender + " says: " +action+ "\n");
+		    }
+
+		    protected function onNotice(event:UserEvent):void 
+		    {
+				addLogEntry(event.sender + " notifies " + event.targetNick  + " of: "+event.message+ "\n");
+		    }
+
+		    protected function onNickChange(event:UserEvent):void 
+		    {
+				addLogEntry(event.sender + " changed his nick to " + event.newNick + "\n");
+		    }
+			/* END OF IRC Event Handlers */
+		    
+		    protected function addLogEntry(entry:String):void
+		    {
+		    	serverLog.text += entry;
+		    	setTimeout(setScroll, 100);
+		    }
+		    
+		    private function setScroll():void
+		    {
+		    	serverLog.verticalScrollPosition = serverLog.maxVerticalScrollPosition;
+		    }
+		    
+		    /**
+		    * swap the connect / disconnect enabled in the menu. 
+		    */
+		    private function toggleConnectionMode(isConnected:Boolean):void
+		    {
+				this.menubarXML[0].menuitem[0].@enabled = ! isConnected;
+				this.menubarXML[0].menuitem[1].@enabled = isConnected;
+				// TODO: Flex doesn't seem to want to turn this menu off after if has been turned on. 
+				this.menubarXML[1].@enabled =  isConnected; 
+		    }
+		    
+		    /**
+		    * Remove all windows from viewstack except console.
+		    */
+		    private function cleanupViewStack():void
+		    {
+		    	var views:Array = channelViewStack.getChildren();
+		    	for (var i:int=views.length; i > 1 ; i--)
+		    	{
+		    		channelViewStack.removeChildAt(i-1);
+		    	}
+		    }
+
+			/* START OF Menubar */ 
+            [Bindable]
+            public var menuBarCollection:XMLListCollection;
+    
+            private var menubarXML:XMLList =
+                <>
+                    <menuitem label="Connect" data="top">
+                        <menuitem label="Connect..." data="connect"/>
+                        <menuitem label="Disconnect" data="disconnect" enabled="false" />
+                    </menuitem>
+                    <menuitem label="IRC" data="top" enabled="false">
+                        <menuitem label="Join Channel..." data="join"/>
+                        <menuitem label="Private Message..." data="pm" />
+                    </menuitem>
+                </>;
+
+            // Event handler to initialize the MenuBar control.
+            private function initCollections():void 
+            {
+                menuBarCollection = new XMLListCollection(menubarXML);
+            }
+
+            // Event handler for the MenuBar control's itemClick event.
+            private function menuHandler(event:MenuEvent):void  
+            {
+                if (event.item.@data == "connect") 
+                {
+					connectWindow = new ConnectWindow();
+					connectWindow.flexIrcClient = this.flexIrcClient;
+					PopUpManager.addPopUp(connectWindow,this, true);                	
+                }        
+                else if (event.item.@data == "disconnect") 
+                {
+                	this.flexIrcClient.disconnect();
+                }        
+                else if (event.item.@data == "join") 
+                {
+					joinChannelDialog = new JoinChannelDialog();
+					joinChannelDialog.flexIrcClient = this.flexIrcClient;
+					PopUpManager.addPopUp(joinChannelDialog,this, true);                	
+                }        
+                else if (event.item.@data == "pm") 
+                {
+					privateMessageDialog = new PrivateMessageDialog();
+					privateMessageDialog.flexIrcClient = this.flexIrcClient;
+					PopUpManager.addPopUp(privateMessageDialog,this, true);                	
+                }        
+            }
+			/* END OF Menubar */ 
+
+
+		]]>
+	</mx:Script>
+	<mx:ViewStack x="10" y="66" id="channelViewStack" width="80%" height="80%" borderStyle="none" cornerRadius="5" alpha="0.95">
+		<mx:Panel label="Status" styleName="logPanel" status="Connected: {Irc.YesNoFormat(connected)}">
+			<mx:VBox height="100%" width="100%" styleName="logContainer">
+				<mx:TextArea height="100%" width="100%" id="serverLog" editable="false" styleName="logWindow" />
+				<mx:HBox width="100%" paddingBottom="5" paddingLeft="5" paddingRight="5" paddingTop="5">
+					<mx:TextInput width="100%" id="cmdLine"  enabled="{connected}" enter="sendCommand()"/>
+					<mx:Button label="Send" id="sendButton" enabled="{connected}" click="sendCommand()"/>
+				</mx:HBox>
+			</mx:VBox>
+		</mx:Panel>
+	</mx:ViewStack>
+	<mx:TabBar x="10" y="45" dataProvider="channelViewStack" styleName="tabBar">
+	</mx:TabBar>
+	<mx:ApplicationControlBar width="100%" left="0" top="0" id="ctrlbar">
+		<mx:Label text="Flex IRC Client" />
+        <mx:MenuBar labelField="@label" itemClick="menuHandler(event);" dataProvider="{menuBarCollection}" />
+	</mx:ApplicationControlBar>
+
+</fx:WindowsBase>

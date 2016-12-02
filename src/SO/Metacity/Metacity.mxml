@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="utf-8"?>
+<fx:WindowsBase xmlns:mx="http://www.adobe.com/2006/mxml" xmlns:fx="SO.Desktop.Window.*" width="100%" height="100%" 
+	updateComplete="SetData()" verticalGap="0" SizeX="560" SizeY="395">
+<mx:Style>
+	.NavTitle
+	{
+		fontWeight: bold;
+	}
+	.NavLinks{
+		padding-left:20;
+		horizontalGap:0;
+	}
+	.butao{
+		  skin: ClassReference(null);
+	  
+ 	
+	}
+	
+	
+</mx:Style>
+
+<mx:Script>
+	<![CDATA[
+		import mx.core.Application;
+		import SO.Util;
+		import SO.InitSO;
+		import mx.controls.Alert;
+		import SO.Pipes.DirectoryQuery;
+			[Bindable]
+			[Embed(source='../../icons/user-home.png')]
+			public var myHome:Class;
+			[Bindable]
+			[Embed(source='../../icons/folder-video.png')]
+			public var myFolderVideo:Class;
+			[Bindable]
+			[Embed(source='../../icons/folders-music.png')]
+			public var myFolderMusic:Class;
+				[Bindable]
+			[Embed(source='../../icons/folders-downloads.png')]
+			public var myFolderDownloads:Class;
+				[Bindable]
+			[Embed(source='../../icons/folders-documents.png')]
+			public var myFolderDocuments:Class;
+				[Bindable]
+			[Embed(source='../../icons/folder-pictures.png')]
+			public var myFolderPictures:Class;	
+			[Bindable]
+			[Embed(source='../../icons/desktop.png')]
+			public var myDesktop:Class;
+			[Bindable]
+			[Embed(source='../../icons/edittrash.png')]
+			public var myTrash:Class;
+			[Bindable]
+			[Embed(source='../../icons/computer.png')]
+			public var myComputer:Class;
+			
+			[Bindable]
+			[Embed(source='../../icons/32/back.png')]
+			public var backIcon:Class;
+			[Bindable]
+			[Embed(source='../../icons/32/forward.png')]
+			public var nextIcon:Class;
+		   	[Bindable]
+			[Embed(source='../../icons/32/gnome-searchtool.png')]
+			public var refreshIcon:Class;
+		   [Bindable]
+			[Embed(source='../../icons/32/gtk-refresh.png')]
+			public var searchIcon:Class;
+			public function SetData() :void
+			{
+				 swfLoader.load(Util.takeSnapshot(Application.application.main));
+				 new DirectoryQuery();
+			}
+	]]>
+</mx:Script>
+	
+		<mx:HBox height="40" width="95%" paddingLeft="10" paddingRight="10" paddingTop="10" verticalGap="0" horizontalGap="1">
+			<mx:Button name="Back" icon="{backIcon}" width="40" styleName="butao"></mx:Button>
+			<mx:Button name="Next" icon="{nextIcon}" width="40" styleName="butao"></mx:Button>
+			<mx:Button name="Refresh" icon="{refreshIcon}" width="40" styleName="butao"></mx:Button>
+			<mx:Button name="Search" icon="{searchIcon}" width="40" styleName="butao"></mx:Button>
+			<mx:TextInput name="location" width="95%"></mx:TextInput>
+			</mx:HBox>
+			<mx:HDividedBox paddingLeft="10" paddingRight="10" paddingBottom="10" verticalGap="0">
+					<mx:VBox height="100%" width="30%">
+									<mx:Label text="Personal" styleName="NavTitle"></mx:Label>
+									<mx:HBox width="100%" styleName="NavLinks" ><mx:Image source="{myHome}" width="16" height="16"/><mx:Label text="Teixeira" ></mx:Label></mx:HBox>
+									<mx:HBox width="100%" styleName="NavLinks"><mx:Image source="{myDesktop}" width="16" height="16"/><mx:Label text="Desktop"  ></mx:Label></mx:HBox>
+									<mx:HBox width="100%" styleName="NavLinks"><mx:Image source="{myFolderDocuments}" width="16" height="16"/><mx:Label text="Documents" ></mx:Label></mx:HBox>
+									<mx:HBox width="100%" styleName="NavLinks"><mx:Image source="{myFolderMusic}" width="16" height="16"/><mx:Label text="Music" ></mx:Label></mx:HBox>
+									<mx:HBox width="100%" styleName="NavLinks"><mx:Image source="{myFolderPictures}" width="16" height="16"/><mx:Label text="Pictures" ></mx:Label></mx:HBox>
+									<mx:HBox width="100%" styleName="NavLinks"><mx:Image source="{myFolderVideo}" width="16" height="16"/><mx:Label text="Videos"  ></mx:Label></mx:HBox>
+									<mx:HBox width="100%" styleName="NavLinks"><mx:Image source="{myFolderDownloads}" width="16" height="16"/><mx:Label text="Downloads" ></mx:Label></mx:HBox>
+									<mx:HBox width="100%" styleName="NavLinks"><mx:Image source="{myTrash}" width="16" height="16"/><mx:Label text="Trash"  ></mx:Label></mx:HBox>
+							<mx:Label text="Devices" styleName="NavTitle"></mx:Label>
+							         <mx:HBox width="100%" styleName="NavLinks"><mx:Image source="{myComputer}" width="16" height="16"/><mx:Label text="Filesystem" ></mx:Label></mx:HBox>
+							<mx:Label text="Network" styleName="NavTitle"></mx:Label>
+								
+					</mx:VBox>
+					<mx:VBox height="100%" width="75%" verticalGap="0">
+								 
+							<mx:TileList  id="cmb" height="100%" width="100%"
+									   rowHeight="50" columnWidth="100"
+									   variableRowHeight = "false" ></mx:TileList>
+					</mx:VBox>
+					
+			</mx:HDividedBox>		
+</fx:WindowsBase>

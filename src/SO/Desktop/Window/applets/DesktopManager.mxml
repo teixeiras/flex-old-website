@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:HBox width="100%" height="100%" xmlns:mx="http://www.adobe.com/2006/mxml" horizontalGap="0">
+
+	<mx:Script>
+		<![CDATA[
+			import away3d.core.utils.Cast;
+			import away3d.materials.ColorMaterial;
+			import away3d.materials.BitmapMaterial;
+			import Plugins.dEffects.FlexView3D;
+			import away3d.primitives.data.CubeMaterialsData;
+			import mx.core.FlexGlobals;
+			import SO.Desktop.BackgroundImage;
+	
+			import mx.core.Application;
+			import SO.Util;
+			import mx.controls.Alert;
+			import flash.display.*;
+			import SO.InitSO;
+			import mx.controls.Image;
+			import mx.collections.ArrayCollection;
+			
+			[Bindable]
+			[Embed(source='Images/gtk-leave-fullscreen.png')]
+			public  var inside:Class;
+					/*new CubeMaterialsData
+					({front:new BitmapMaterial(BMPData),
+					  left: new ColorMaterial(0xffffff,{alpha:.3}),
+					  right: new ColorMaterial(0xff00ff,{alpha:1})
+					  
+					  };*/
+					
+				
+			public function updateCube():Plugins.dEffects.FlexView3D
+			{
+					
+					
+					var mat:CubeMaterialsData=new CubeMaterialsData();
+					mat.front=new BitmapMaterial(Bitmap(screen1.content).bitmapData);
+					mat.right=new BitmapMaterial(Bitmap(screen2.content).bitmapData);
+					mat.top=new BitmapMaterial(Bitmap(screen1.content).bitmapData);
+					mat.bottom=new BitmapMaterial(Bitmap(screen1.content).bitmapData);
+					mat.left=new BitmapMaterial(Bitmap(screen4.content).bitmapData);
+					mat.back=new BitmapMaterial(Bitmap(screen3.content).bitmapData);
+					return new FlexView3D(mat);	
+			}
+			public function init():void
+			{
+				
+				
+					taskBacks[0]=Util.takeSnapshot(FlexGlobals.topLevelApplication.WorkSpace);					
+					taskBacks[1]=Util.takeSnapshot(FlexGlobals.topLevelApplication.WorkSpace);
+			 		taskBacks[2]=Util.takeSnapshot(FlexGlobals.topLevelApplication.WorkSpace);
+					taskBacks[3]=Util.takeSnapshot(FlexGlobals.topLevelApplication.WorkSpace);
+					
+					
+				
+			}
+	
+			
+				
+			public  var taskBarItems1: ArrayCollection = new ArrayCollection();
+			public  var taskBarItems2 : ArrayCollection = new ArrayCollection();
+			public  var taskBarItems3: ArrayCollection = new ArrayCollection();
+			public var taskBarItems4: ArrayCollection = new ArrayCollection();
+			[Bindable]
+			public  var taskBacks: ArrayCollection =new ArrayCollection(new Array(inside,inside,inside,inside));
+			
+			public static var WITH_WINDOWS:uint=1;
+			public static var WITHOUT_WINDOWS:uint=0;
+			public function setScreen(screens:uint):void
+			{
+				
+			
+				switch(screens)
+				{
+					case 1:
+					if(InitSO.screeny==screen1)return;
+							InitSO.screeny=screen1;
+							InitSO.taskBarItems= taskBarItems1;
+							
+						break;
+					case 2:
+					if(InitSO.screeny==screen2)return;
+							InitSO.screeny=screen2;
+							InitSO.taskBarItems= taskBarItems2;
+						break;
+					case 3:
+					if(InitSO.screeny==screen3)return;
+							InitSO.screeny=screen3;
+						InitSO.taskBarItems= taskBarItems3;
+						break;
+					case 4:
+					if(InitSO.screeny==screen4)return;
+							InitSO.screeny=screen4;
+							InitSO.taskBarItems= taskBarItems4;
+						break;
+				}
+				for(var i:uint;i<InitSO.taskBarItems.length;i++)
+						InitSO.taskBarItems[i].window.visible=false;
+				 FlexGlobals.topLevelApplication.cube.removeAllChildren();
+				 var fv = InitSO.desktopManager.updateCube();
+			     FlexGlobals.topLevelApplication.cube.addChild(fv);
+			     FlexGlobals.topLevelApplication.gl.visible=false;
+			     FlexGlobals.topLevelApplication.cube.visible=true;
+				 fv.goTo(screens -1 );
+				for(i=0;i<InitSO.taskBarItems.length;i++)
+								InitSO.taskBarItems[i].window.visible=true;
+				
+			}
+			
+			public function ScreenStatus(screen:SWFLoader):void
+			{
+					var id:Number=0;
+					if(screen==screen1)
+							id=0;
+				   if(screen==screen2)
+							id=1;
+					if(screen==screen3)
+							id=2;
+					if(screen==screen4)
+							id=3;
+					taskBacks[id]= Util.takeSnapshot(FlexGlobals.topLevelApplication.WorkSpace);			
+					screen.load(taskBacks[id]);
+			
+			}
+			
+		]]>
+	</mx:Script>
+	<mx:Style>
+		.cv
+		{
+			border-thickness:1px;
+			border-color:#474642;
+			border-style:solid;
+			
+			
+		}
+	</mx:Style>
+	<mx:Canvas alpha="0.4" styleName="cv" width="25%"  height="100%"><mx:SWFLoader id="screen1"  source="{taskBacks.getItemAt(0)}" width="100%" maintainAspectRatio="false"  height="100%" click="setScreen(1);" ></mx:SWFLoader></mx:Canvas>
+	<mx:Canvas alpha="0.4" styleName="cv" width="25%"  height="100%"><mx:SWFLoader id="screen2"  source="{taskBacks.getItemAt(1)}" width="100%" maintainAspectRatio="false"  height="100%" click="setScreen(2);" ></mx:SWFLoader></mx:Canvas>
+	<mx:Canvas alpha="0.4" styleName="cv" width="25%"  height="100%"><mx:SWFLoader id="screen3"  source="{taskBacks.getItemAt(2)}" width="100%" maintainAspectRatio="false"  height="100%" click="setScreen(3);" ></mx:SWFLoader></mx:Canvas>
+	<mx:Canvas alpha="0.4" styleName="cv" width="25%"  height="100%"><mx:SWFLoader id="screen4"  source="{taskBacks.getItemAt(3)}" width="100%" maintainAspectRatio="false"  height="100%" click="setScreen(4);" ></mx:SWFLoader></mx:Canvas>
+
+</mx:HBox>

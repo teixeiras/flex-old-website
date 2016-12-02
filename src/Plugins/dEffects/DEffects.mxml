@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<fx:WindowsBase xmlns:mx="http://www.adobe.com/2006/mxml" xmlns:fx="SO.Desktop.Window.*" 
+	width="100%" height="100%" verticalGap="1" horizontalGap="1" 
+	paddingBottom="10" paddingLeft="10" paddingRight="10" paddingTop="10" SizeX="560" SizeY="410"
+> 
+	
+
+	<mx:Script>
+		<![CDATA[
+			
+			
+			
+    
+		]]>
+	</mx:Script>
+
+  </fx:WindowsBase>

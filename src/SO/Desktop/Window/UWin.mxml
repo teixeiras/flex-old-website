@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<flexlib:MDIWindow xmlns:mx="http://www.adobe.com/2006/mxml" xmlns:flexlib="http://code.google.com/p/flexlib/" creationComplete="Init();" verticalGap="0" horizontalGap="0">
+	
+	<mx:Script>
+		<![CDATA[
+			import mx.controls.Alert;
+			import mx.events.ChildExistenceChangedEvent;
+			import mx.messaging.AbstractConsumer;
+			import flexlib.mdi.events.MDIWindowEvent;
+			import flexlib.mdi.containers.MDIWindow;
+			import flexlib.mdi.containers.MDIWindowControlsContainer;
+			
+		public function Init():void
+		{
+			this.windowControls.setStyle("verticalGap", 0);
+			this.windowControls.setStyle("horizontalGap", 0);
+			this.minHeight=200;
+			this.minHeight=200;
+			
+			}
+			
+		]]>
+	</mx:Script>
+	<mx:Style>
+		.mdiWindowFocus
+		{
+				borderColor: #F0EBE2;
+				borderAlpha: 1;
+				borderThicknessLeft: 0;
+				borderThicknessTop: 0;
+				borderThicknessBottom: 0;
+				borderThicknessRight: 0;
+				roundedBottomCorners: true;
+				cornerRadius: 5;
+				dropShadowEnabled: true;
+				headerHeight: 25;
+				backgroundAlpha: 1; 
+				header-style-name:"headMe";
+				backgroundColor: #f0ebe2;
+				titleStyleName: "mdiWindowTitleStyle";
+				titleBackgroundSkin:Embed(source="images/background.png");
+				
+		}
+
+		.mdiWindowNoFocus
+		{
+				borderColor: #F0EBE2;
+				borderAlpha: 1;
+				borderThicknessLeft: 0;
+				borderThicknessTop: 0;
+				borderThicknessBottom: 0;
+				borderThicknessRight: 0;
+				roundedBottomCorners: true;
+				cornerRadius: 5;
+				dropShadowEnabled: true;
+				headerHeight: 25;
+				header-style-name:"headMe";
+				backgroundAlpha: 1; 
+				backgroundColor: #f0ebe2;
+				titleStyleName: "mdiWindowTitleStyle";
+				titleBackgroundSkin:  Embed(source="images/background.png");
+				
+		
+		}
+	.headMe
+	{
+		padding-left:10px;
+	}
+		.mdiWindowTitleStyle
+		{
+				fontFamily: Arial;
+				fontSize: 12;
+				fontWeight: bold;
+				color: #dfd9d1;
+				padding-left:10px;
+		}
+
+		.mdiWindowMinimizeBtn
+		{
+				upSkin:        Embed(source="images/minimize.png");
+				overSkin:      Embed(source="images/minimize.png");
+				downSkin:      Embed(source="images/minimize.png");
+				 disabledSkin:   Embed(source="images/minimize.png");
+		}
+		
+		.mdiWindowMinimizeBtnNoFocus
+		{
+				upSkin:        Embed(source="images/unmaximize_unfocused.png");
+				overSkin:      Embed(source="images/unmaximize_unfocused_over.png");
+				downSkin:      Embed(source="images/unmaximize_unfocused.png");
+				disabledSkin:  Embed(source="images/unmaximize_unfocused.png");
+		}
+
+
+		.mdiWindowMaximizeBtn
+		{
+				upSkin:        Embed(source="images/maximize.png");
+				overSkin:      Embed(source="images/maximize.png");
+				downSkin:      Embed(source="images/maximize.png");
+				disabledSkin:  Embed(source="images/maximize.png");
+		}
+
+		.mdiWindowMaximizeBtnNoFocus
+		{
+				upSkin:        Embed(source="images/maximize_unfocused.png");
+				overSkin:      Embed(source="images/maximize_unfocused_over.png");
+				downSkin:      Embed(source="images/maximize_unfocused.png");
+				disabledSkin:  Embed(source="images/maximize_unfocused.png");
+		}
+
+
+		.mdiWindowRestoreBtn
+		{
+				upSkin:        Embed(source="images/maximize_unfocused.png");
+				overSkin:      Embed(source="images/maximize_unfocused.png");
+				downSkin:      Embed(source="images/maximize_unfocused.png");
+				disabledSkin: Embed(source="images/maximize_unfocused.png");
+		}
+
+		.mdiWindowRestoreBtnNoFocus
+		{
+				upSkin:        Embed(source="images/maximize_unfocused.png");
+				overSkin:      Embed(source="images/maximize_unfocused.png");
+				downSkin:      Embed(source="images/maximize_unfocused.png");
+				disabledSkin:  Embed(source="images/maximize_unfocused.png");
+		}
+
+
+		.mdiWindowCloseBtn
+		{
+				upSkin:        Embed(source="images/close.png");
+				overSkin:      Embed(source="images/close.png");
+				downSkin:      Embed(source="images/close.png");
+				disabledSkin: Embed(source="images/close.png");
+		}
+
+		.mdiWindowCloseBtnNoFocus
+		{
+				upSkin:        Embed(source="images/close_unfocused.png");
+				overSkin:      Embed(source="images/close_unfocused_over.png");
+				downSkin:      Embed(source="images/close_unfocused.png");
+				disabledSkin:  Embed(source="images/close_unfocused.png");
+		}
+	
+	</mx:Style>
+</flexlib:MDIWindow>

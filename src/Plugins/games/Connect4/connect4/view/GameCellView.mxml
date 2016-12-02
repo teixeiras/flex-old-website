@@ -1,0 +1,173 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" xmlns="*"
+    width="{GameStateView.CELL_SIZE}" height="{GameStateView.CELL_SIZE}"
+    creationComplete="onCreationComplete()"
+    clipContent="false">
+    
+	<mx:Script>
+		<![CDATA[
+			import mx.core.UIComponent;
+			import mx.effects.Pause;
+			import mx.effects.Parallel;
+			import Plugins.games.Connect4.connect4.model.Game;
+		    import mx.effects.easing.*;
+		    import mx.events.EffectEvent;
+import mx.effects.SoundEffect;
+import mx.effects.Sequence;
+import mx.effects.Move;
+import mx.effects.easing.Bounce;
+import mx.effects.easing.Sine;
+
+// row, column indices for this cell
+public var row:uint;
+public var column:uint;
+
+// our owning GameStateView
+public var stateView:GameStateView;
+
+// our Game
+public var game:Game;
+
+// cached value of most recent player known to have a token in this cell, or -1 if none
+private var _currentPlayer:Number = -1;
+
+// cached array of direction labels for analysis display
+private var _directionLabels:Array;
+
+private function onCreationComplete():void
+{
+	_directionLabels = [neLabel, eLabel, seLabel, sLabel, swLabel, wLabel, nwLabel, null];
+	game.addEventListener(Game.STATE_CHANGED, updateCellView);
+	updateCellView(null);
+}
+
+[Embed(source="sounds/move.mp3")]
+private var moveSound:Class;
+
+/**
+ * Set the player for this cell.
+ */
+private function updateToken(player:Number):void
+{
+    if (player == _currentPlayer)
+    {
+        return;
+    }
+    
+    if (player < 0)
+    {
+        // empty this cell of whatever's in it by dropping it offscreen
+        var currentToken:UIComponent = (_currentPlayer == Game.RED) ? redToken : yellowToken;
+        var e:Move = new Move();
+        e.duration = 500;
+        e.easingFunction = Bounce.easeIn;
+        e.yFrom = 0;
+        e.yTo = 1000;
+        e.play([currentToken]);
+    }
+    else
+    {
+        // drop a token from the top of the screen into this cell.
+        // in parallel with the animation, we have a sequence
+        // of a pause and an appropriate sound effect, timed
+        // to occur at the end of the drop.
+        currentToken = (player == Game.RED) ? redToken : yellowToken;
+        var par:Parallel = new Parallel();
+        e = new Move();
+        var duration:Number = 300 * (y / (GameStateView.CELL_GRID * Game.ROWS));
+        e.duration = duration;
+        e.yFrom = -y;
+        e.yTo = 0;
+        e.easingFunction = Bounce.easeIn;
+
+        par.addChild(e);
+
+        var seq:Sequence = new Sequence();
+
+        var pause:Pause = new Pause();
+        pause.duration = duration - 25;
+        pause.addEventListener(EffectEvent.EFFECT_END,
+                              function(e:Event):void { game.dispatchEvent(new Event(Game.TOKEN_PLACED)); });
+        seq.addChild(pause);
+
+        var sfx:SoundEffect = new SoundEffect();
+        sfx.source = moveSound;
+        sfx.useDuration = false;
+        seq.addChild(sfx);
+
+        par.addChild(seq);
+        par.play([currentToken]);
+    }
+    _currentPlayer = player;
+}
+
+/**
+ * Update this cell view from the current game state.
+ */
+public function updateCellView(e:Event):void
+{
+	var cellPlayer:Number = game.state.getCellPlayer(row, column);
+	
+    updateToken(cellPlayer);
+    
+	if (cellPlayer >= 0)
+	{
+	    // Never show direction labels if there's a token, and maybe show WIN! as a score label
+		dirLabelLayer.visible = false;
+        scoreLabel.text = game.state.isWinningCell(row, column) ? "WIN!" : "";
+		return;
+	}
+
+    // Show positional analysis score if called for
+	if (stateView.showAnalysis && game.state.isCellInPlay(row, column))
+	{
+		scoreLabel.text = game.state.getNextState(column).score.toFixed(1);
+	}
+	else
+	{
+		scoreLabel.text = "";
+	}
+
+    // hide run direction labels if called for	
+	if (!stateView.showAnalysis)
+	{
+		dirLabelLayer.visible = false;
+		return;
+	}
+	
+	// otherwise, go through all the run directions
+	// and show the run lengths in the labels
+	var maxRunLength:uint = 0;
+	for (var dir:uint = 0; dir < 7; dir++)
+	{
+		var cellRun:int = game.state.getRun(row, column, dir);
+		var label:Label = _directionLabels[dir] as Label;
+		if (cellRun != 0)
+		{
+			label.text = Math.abs(cellRun).toString();
+			label.setStyle("color", cellRun > 0 ? 0xFFFF00 : 0xFF0000);
+			maxRunLength = Math.max(maxRunLength, Math.abs(cellRun));
+		}
+		else
+		{
+			label.text = "";
+		}
+	}
+	dirLabelLayer.visible = (maxRunLength > 0);
+}
+		]]>
+	</mx:Script>
+	
+	<mx:Canvas id="dirLabelLayer" visible="false">
+		<mx:Label x="0" y="0" text="0" width="20" id="nwLabel" textAlign="center"/>
+		<mx:Label x="0" y="35" text="0" width="20" id="wLabel" textAlign="center"/>
+		<mx:Label x="0" y="70" text="0" width="20" id="swLabel" textAlign="center"/>
+		<mx:Label x="70" y="0" text="0" width="20" id="neLabel" textAlign="center"/>
+		<mx:Label x="70" y="35" text="0" width="20" id="eLabel" textAlign="center"/>
+		<mx:Label x="70" y="70" text="0" width="20" id="seLabel" textAlign="center"/>
+		<mx:Label x="35" y="70" text="0" width="20" id="sLabel" textAlign="center"/>
+	</mx:Canvas>
+    <mx:Image id="redToken" y="-1000" source="@Embed(source='images/redToken.png')"  width="{GameStateView.CELL_SIZE}" height="{GameStateView.CELL_SIZE}"/>
+    <mx:Image id="yellowToken" y="-1000" source="@Embed(source='images/yellowToken.png')"  width="{GameStateView.CELL_SIZE}" height="{GameStateView.CELL_SIZE}"/> 
+	<mx:Label id="scoreLabel" x="15" y="25" text="" fontSize="20" textAlign="center" width="60"/>
+</mx:Canvas>

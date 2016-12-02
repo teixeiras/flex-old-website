@@ -1,0 +1,199 @@
+<?xml version="1.0" encoding="utf-8"?>
+<fx:WindowsBase xmlns:mx="http://www.adobe.com/2006/mxml" xmlns:fx="SO.Desktop.Window.*" 
+	creationComplete="init();" width="100%" height="100%" verticalGap="0" horizontalGap="0"
+	SizeX="600" SizeY="420">
+	<mx:XMLList id="treeData">
+        <node label="Mail Box">
+            <node label="Inbox">
+                <node label="Marketing"/>
+                <node label="Product Management"/>
+                <node label="Personal"/>
+            </node>
+            <node label="Outbox">
+                <node label="Professional"/>
+                <node label="Personal"/>
+            </node>
+            <node label="Spam"/>
+            <node label="Sent"/>
+        </node>    
+    </mx:XMLList>
+	<mx:XMLListCollection id="xmlListColl" />
+	<mx:XML format="e4x" id="movieList">
+	 				<root>
+		                 <menuitem label="Open"  ></menuitem>
+		                 <menuitem label="Play/Pause"  ></menuitem>
+		                  <menuitem label="Quit"  ></menuitem>
+	                 </root> 
+				   </mx:XML>
+	<mx:Box direction="vertical" width="100%" height="100%" verticalGap="0" horizontalGap="0">
+
+	     	<mx:HBox width="100%" height="20" styleName="topbar">	                
+					 		<mx:HBox id="MovieBox" click="createAndShow(movieList,MovieBox);" backgroundColor="#474642" >
+								<mx:Label text="File" id="MovieText" color="#dfd9d1"></mx:Label>	
+							</mx:HBox>
+				</mx:HBox>			
+					    <mx:Script>
+        <![CDATA[
+
+            [Bindable]
+            public var selectedNode:Object;
+
+            // Event handler for the Tree control change event.
+            public function treeChanged(event:Event):void {
+				if(Tree(event.target).selectedItem.@path!=null && Tree(event.target).selectedItem.@path!="" && Tree(event.target).selectedItem.@path!=" ")
+				 play(Tree(event.target).selectedItem.@path);
+          
+            }
+        ]]>
+    </mx:Script>
+
+
+<!--http://www.adobe.com/livedocs/flex/2/langref/mx/controls/Tree.html
+	http://flexlib.googlecode.com/svn/trunk/docs/flexlib/controls/HSlider.html
+-->
+
+        
+    <mx:Panel height="100%" width="100%" verticalGap="0" horizontalGap="0" >
+
+        <mx:HDividedBox width="100%" height="100%" verticalGap="0" horizontalGap="0">
+        	<mx:Panel id="panel" visible="false" width="100%" height="100%" verticalGap="0" horizontalGap="0">
+	        <mx:UIComponent id="uic" />
+	        <mx:ControlBar>
+	            <mx:Button label="Play/Pause" click="ns.togglePause();" />
+	            <mx:Button label="Rewind" click="ns.seek(0); ns.pause();" />
+	        </mx:ControlBar>
+	    </mx:Panel>
+	    
+
+		    <mx:Tree id="myTree" width="50%" height="100%" labelField="@label" 
+		    		showRoot="false" dataProvider="{xmlListColl}" change="treeChanged(event)"/>
+            
+        </mx:HDividedBox>
+        
+    </mx:Panel>
+
+		   <mx:Script>
+	        <![CDATA[
+				import mx.collections.XMLListCollection;
+	        	import mx.controls.Alert;
+	        	import mx.events.MenuEvent;
+	        	import mx.controls.Menu;
+				import mx.rpc.events.FaultEvent;
+				import mx.rpc.events.ResultEvent;
+	            import mx.utils.ObjectUtil;
+	 
+	            private var nc:NetConnection;
+	            private var ns:NetStream;
+	            private var video:Video;
+	            private var meta:Object;
+	 	
+	 	private function createAndShow(menu:XML, box:HBox):void {
+				box.setStyle("backgroundColor","#b0a18b");
+				box.setStyle("color", "white");
+				
+                var myMenu:Menu = Menu.createMenu(null, menu, false);
+                myMenu.labelField = "@label";
+				myMenu.iconField="@icon";
+                myMenu.addEventListener(MenuEvent.MENU_HIDE,back);
+              //  myMenu.addEventListener(MenuEvent.ITEM_CLICK,menuSelect);
+                myMenu.setStyle("color", "#dfd9d1");
+				myMenu.setStyle("backgroundColor", "#474642");
+				myMenu.setStyle("rollOverColor", "#b0a18b");
+				myMenu.setStyle("textRollOverColor", "white");
+				var pt:Point =box.localToGlobal( new Point( box.x, box.y ) ); 
+                myMenu.show(pt.x, pt.y+box.height);
+                
+            }
+            private function back(vent:MenuEvent):void
+             {
+             		                
+		 		MovieBox.setStyle("backgroundColor","#474642");
+				MovieText.setStyle("color","#dfd9d1");	
+	
+             }
+			 
+
+        private function netStatusHandler(event:NetStatusEvent):void {
+            switch (event.info.code) {
+            
+                case "NetStream.Play.StreamNotFound":
+                   	
+                    break;
+            }
+        }
+
+        private function securityErrorHandler(event:SecurityErrorEvent):void {
+            trace("securityErrorHandler: " + event);
+        }
+
+           
+            	private function play(mv:String):void
+            	{
+            		    var nsClient:Object = {};
+		                nsClient.onMetaData = ns_onMetaData;	 
+					
+		                nc = new NetConnection();
+		              
+						nc.addEventListener(NetStatusEvent.NET_STATUS, netStatusHandler);
+						nc.addEventListener(SecurityErrorEvent.SECURITY_ERROR, securityErrorHandler);
+						nc.connect(null);
+						if (ns)
+							ns.close();
+		                ns = new NetStream(nc);
+						ns.addEventListener(NetStatusEvent.NET_STATUS, netStatusHandler);
+					
+		                ns.play(Main.PATH+mv);
+		                ns.client = nsClient;
+						
+		                video = new Video();
+		                video.attachNetStream(ns);
+		                uic.addChild(video);
+            	}
+	            private function init():void {
+	               moviesRequest.send();
+	            
+	            }
+	 
+	            private function ns_onMetaData(item:Object):void {
+	                
+	                meta = item;
+	                // Resize Video object to same size as meta data.
+	                video.width = item.width;
+	                video.height = item.height;
+	                // Resize UIComponent to same size as Video object.
+	                uic.width = video.width;
+	                uic.height = video.height;
+	                panel.visible = true;
+	        
+	            }
+				
+				
+				private function onFault(event:FaultEvent):void
+			{
+				var title:String = event.type + ' (' + event.fault.faultCode + ')';
+				var text:String  = event.fault.faultString;
+				Alert.show(text, title);
+			}
+
+			private function onResult(event:ResultEvent):void
+			{
+				var xmlList:XMLList = XML(event.result).movie;
+				xmlListColl = new XMLListCollection(xmlList);
+			}
+
+	          
+	        ]]>
+	    </mx:Script>
+		
+
+	    
+	 </mx:Box>
+	 		<mx:HTTPService id="moviesRequest" url="{Main.PATH+'videos.php'}" 
+			useProxy="false" method="POST" resultFormat="e4x"
+			fault="onFault(event)"
+			result="onResult(event)">
+				<mx:request xmlns="">
+
+				</mx:request>
+				</mx:HTTPService>
+ </fx:WindowsBase>

@@ -1,0 +1,449 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Application xmlns:mx="http://www.adobe.com/2006/mxml" xmlns:gx="library://ns.adobe.com/flex/halo"
+							xmlns:flexlib="http://code.google.com/p/flexlib/"  
+							xmlns:applets="SO.Desktop.Window.applets.*" initialize="init();"	
+							applicationComplete="registerGlobalKeyHandler();"			
+							layout="absolute" width="943" height="520"  preloader="com.preloader.Preloader"
+	 						 xmlns:SO="SO.*">
+	
+	
+	<mx:Style source="styles/Default.css"></mx:Style>
+		
+	<mx:Script>
+		<![CDATA[
+			import Plugins.Mp3.Mp3Player;
+			import Plugins.Paint.Paint;
+			import Plugins.System.ChangeDesktop.ChangeDesktop;
+			import Plugins.VideoPlayer.videoplayer;
+			import Plugins.dEffects.DEffects;
+			import Plugins.games.Breakout.breakout;
+			import Plugins.games.Connect4.Connect4;
+			import Plugins.games.tetris.TheTetrisGame;
+			import Plugins.irc.Irc;
+			
+			import SO.Metacity.Metacity;
+			import SO.Pipes.*;
+			
+			import com.devaldi.controls.flexpaper.About;
+			import com.devaldi.controls.flexpaper.FlexPaperViewer;
+			
+			import flexlib.mdi.containers.MDIWindow;
+			import flexlib.mdi.events.MDIManagerEvent;
+			import flexlib.mdi.events.MDIWindowEvent;
+			
+			import mx.collections.ArrayCollection;
+			import mx.containers.Box;
+			import mx.containers.Canvas;
+			import mx.controls.Alert;
+			import mx.core.Application;
+			import mx.core.FlexShape;
+			import mx.core.SpriteAsset;
+			import mx.core.UIComponent;
+			import mx.formatters.DateFormatter;
+			import mx.rpc.events.ResultEvent;
+			import mx.utils.ArrayUtil;
+			
+			import org.osmf.media.LoadableElementBase;
+			[Bindable]
+			public static var PATH:String="http://techtux.org/";
+			
+			import mx.events.MenuEvent;
+			import SO.InitSO;
+			import SO.Menus.TopMenu;
+			import mx.controls.Menu;
+			import SO.Desktop.Window.WindowsBase;
+
+			import SO.Desktop.Window.applets.DesktopManager;
+			import SO.Desktop.Window.taskbar.*;
+			import SO.Desktop.Window.UWin;
+
+			//http://developer.yahoo.com/flash/maps/examples.html
+			
+			
+			public function registerGlobalKeyHandler() :void
+			{
+				stage.addEventListener(KeyboardEvent.KEY_DOWN, handleKeyDown);
+			}
+			public var ctrlDown:Boolean=false;
+			public var shiftDown:Boolean=false;
+			public var prev:int=0;
+			public var curr:int=0;
+			public function handleKeyDown(event:KeyboardEvent) :void
+			{
+				if(event.ctrlKey)
+			      ctrlDown = true;
+			      
+			     if(event.shiftKey)
+			      shiftDown = true;
+			      
+			     prev = curr;
+			     curr = event.keyCode;
+			     if(ctrlDown)
+			     	switch(event.keyCode)
+			     	{
+			     		case Keyboard.F1:
+			     			
+			     		break;
+			     	}
+			     else
+			    	 	
+			     if(ctrlDown && event.keyCode == 70 && prev == 17)
+			     {
+			     	
+			      Alert.show("ctrl+f pressed ");
+			     }
+			      
+			     if(shiftDown && event.keyCode == 70 && prev == 16)
+			     {
+			     
+			      
+			     } 
+			}
+			
+			public  var so:InitSO;  
+			private var topMenu:TopMenu = new SO.Menus.TopMenu();
+		
+			private var timer:Timer;
+			private function init():void
+			{
+				so = new InitSO(WorkSpace, desktopManager);
+				WorkSpace.windowManager.addEventListener(MDIManagerEvent.WINDOW_MINIMIZE, windowMinimizeHandler);		
+				this.timer = new Timer(1000);
+				 this.addEventListener("finished", stopme);
+		        this.timer.addEventListener(TimerEvent.TIMER, this.resetNow);
+		        this.timer.start();
+		          
+			}
+		        
+		        private function resetNow(event:TimerEvent):void 
+		        {
+		        	
+					var format:DateFormatter=new DateFormatter();
+					format.formatString="EEE MMM D, LL:NN A"; 
+
+		            this.clock.text =format.format(new Date());
+		        }
+                    
+   			public function stopme(event:Event):void 
+			{
+			
+				 this.gl.visible=true;
+			     this.cube.visible=false;
+			}
+
+			
+			
+			private function windowMinimizeHandler(event:Event):void
+			{
+				if(event is MDIManagerEvent)
+				{
+					
+					var mgrEvent:MDIManagerEvent = event as MDIManagerEvent;	
+					mgrEvent.window.visible = false;
+		
+			
+				}
+			}
+			private function closeWindow(event:MDIWindowEvent):void
+			{
+				var index:int=0;
+				for(var i:uint ;i<SO.InitSO.taskBarItems.length; i++)
+					if(SO.InitSO.taskBarItems[i].window==event.window)
+							index  = i;		
+				
+				SO.InitSO.taskBarItems.removeItemAt( index );
+					desktopManager.ScreenStatus(SO.InitSO.screeny);
+				
+			}
+			
+			private function restoreWindow(event:Event):void
+			{
+				if(!this.tbar.selectedItem)return;
+				
+				var item : TaskBarItem = this.tbar.selectedItem as TaskBarItem;
+				item.window.visible = true;
+				if(!item.window.minimized)
+				{
+						WorkSpace.windowManager.bringToFront(item.window);
+				}
+				else
+				{
+						item.window.dispatchEvent( new MDIWindowEvent(MDIWindowEvent.RESTORE,item.window) );
+						WorkSpace.windowManager.bringToFront(item.window);
+						item.window.unMinimize();
+				}
+				
+				
+			}
+			//http://flexpaper.devaldi.com/
+	    	[Bindable]
+			[Embed(source='images/start-here.png')]
+			public  var topIcon:Class;
+			[Bindable]
+			[Embed(source='icons/applications-games.png')]
+			public  var myGames:Class;
+			[Bindable]
+			[Embed(source='icons/applications-accessories.png')]
+			public  var myAcess:Class;
+			[Bindable]
+			[Embed(source='icons/applications-graphics.png')]
+			public  var myGraphics:Class;
+			[Bindable]
+			[Embed(source='icons/applications-internet.png')]
+			public  var myInternet:Class;
+			[Bindable]
+			[Embed(source='icons/applications-office.png')]
+			public  var myOffice:Class;
+			[Bindable]
+			[Embed(source='icons/applications-multimedia.png')]
+			public  var myMultimedia:Class;
+			[Bindable]
+			[Embed(source='icons/gnome-terminal.png')]
+			public var myTerminal:Class;
+			[Bindable]
+			[Embed(source='icons/user-desktop.png')]
+			public static  var myHideWindows:Class;
+			[Bindable]
+			[Embed(source='icons/totem.png')]
+			public var myVideoPlayer:Class;
+			[Bindable]
+			[Embed(source='icons/xchat.png')]
+			public var myXChat:Class;
+			[Bindable]
+			[Embed(source='icons/kfourinline.png')]
+			public var my4inline:Class;
+		[Bindable]
+			[Embed(source='icons/gnome-breakout.png')]
+			public var mybreakout:Class;
+			[Bindable]
+			[Embed(source='icons/tetris.png')]
+			public var myTetris:Class;
+			[Bindable]
+			[Embed(source='icons/background.png')]
+			public var myBackground:Class;
+			[Bindable]
+			[Embed(source='icons/user-home.png')]
+			public var myHome:Class;
+			[Bindable]
+			[Embed(source='icons/folder-video.png')]
+			public var myFolderVideo:Class;
+			[Bindable]
+			[Embed(source='icons/folders-music.png')]
+			public var myFolderMusic:Class;
+				[Bindable]
+			[Embed(source='icons/folders-downloads.png')]
+			public var myFolderDownloads:Class;
+				[Bindable]
+			[Embed(source='icons/folders-documents.png')]
+			public var myFolderDocuments:Class;
+				[Bindable]
+			[Embed(source='icons/folder-pictures.png')]
+			public var myFolderPictures:Class;
+				[Bindable]
+			[Embed(source='icons/desktop.png')]
+			public var myDesktop:Class;
+				[Bindable]
+			[Embed(source='icons/edittrash.png')]
+			public var myTrash:Class;
+	
+	
+			
+			private function createAndShow(menu:XML, box:HBox):void {
+				
+				box.setStyle("backgroundColor","#b0a18b");
+				box.setStyle("color", "white");
+				
+                var myMenu:Menu = Menu.createMenu(null, menu, false);
+                myMenu.labelField = "@label";
+				myMenu.iconField="@icon";
+			
+                myMenu.addEventListener(MenuEvent.MENU_HIDE,back);
+                myMenu.addEventListener(MenuEvent.ITEM_CLICK,menuSelect);
+                myMenu.setStyle("color", "#dfd9d1");
+				myMenu.setStyle("backgroundColor", "#474642");
+				myMenu.setStyle("rollOverColor", "#b0a18b");
+				myMenu.setStyle("textRollOverColor", "white");
+								
+                myMenu.show(box.x, box.y+box.height);
+                
+            }
+            private function loadProgram(name:String, classe:WindowsBase,icon:Class): void
+             {
+             		var win:UWin=new UWin();
+					win.title=name;
+					win.titleIcon=icon;
+					var x:Number=(classe.SizeX==0?500:classe.SizeX);
+					var y:Number=(classe.SizeY==0?400:classe.SizeY);
+					win.minHeight=x;
+					win.minWidth=y;
+					win.addChild(classe);
+				    win.width=x;
+				    win.height=y;
+				    win.addEventListener(MDIWindowEvent.CLOSE,closeWindow);
+		
+					WorkSpace.windowManager.add(win);
+					var item : TaskBarItem = new TaskBarItem(win.title,win,icon);
+					SO.InitSO.taskBarItems.addItem(item);
+					desktopManager.ScreenStatus(SO.InitSO.screeny);
+				
+					
+             }
+      
+
+            private function menuSelect(vent:MenuEvent):void
+             {
+             	var method:String = String(vent.item.@command);
+             		switch(method)
+             		 {
+             		 	case 'Console':
+											loadProgram(Console.getName(),new Console(),myTerminal);					
+             		 			break;
+             		 	case 'vplayer':
+											loadProgram("Video Player",new videoplayer() , myVideoPlayer);
+             		 			break;
+						case 'tetris':
+										loadProgram("Tetris",new TheTetrisGame() ,myTetris);
+							break;
+						case 'Connect':
+										loadProgram("Connect",new Connect4() , my4inline);
+							break;
+						case 'Breakout':
+									loadProgram("Breakout",new breakout() , mybreakout);
+							break;
+						case 'mp3':
+							loadProgram("Rythmix",new Mp3Player() , myVideoPlayer);
+						break;		
+						case 'irc':
+							loadProgram("XChat",new Irc() ,myXChat);
+						break;	
+						case 'homeFolder':
+						case 'desktopFolder':
+						case 'DocumentsFolder':
+						case 'MusicFolder':
+							loadProgram("Metacity",new Metacity() ,myBackground);
+							break;
+						case 'paint':
+							loadProgram("Gimp",new Paint() , myVideoPlayer);
+						break;
+						case 'ChangeBackground':
+							loadProgram("Background",new ChangeDesktop() ,myBackground);
+							
+						break;
+             		 }	                
+		 		
+				
+             }
+            private function back(vent:MenuEvent):void
+             {
+             		                
+		 		ApplicationBox .setStyle("backgroundColor","#474642");
+				applicationText.setStyle("color","#dfd9d1");	
+				
+				placesBox.setStyle("backgroundColor","#474642");
+				placesText.setStyle("color","#dfd9d1");
+				
+				systemBox.setStyle("backgroundColor","#474642");
+				systemText.setStyle("color","#dfd9d1"); 	
+				
+             }
+            
+		]]>
+			
+	</mx:Script>
+
+	
+	<mx:XML format="e4x" id="MenuList">
+	 				<root>
+		                 <menuitem label="Accessories" icon="myAcess" > 
+		                 		 	<menuitem label="Terminal" icon="myTerminal" command="Console"></menuitem> 
+		                    </menuitem>  
+		                 <menuitem label="Games"  icon="myGames">
+		                 	<menuitem label="Tetris" icon="myTetris" command="tetris"></menuitem>
+		                 	<menuitem label="Connect 4" icon="my4inline" command="Connect"></menuitem>
+		                 	<menuitem label="Breakout" icon="mybreakout" command="Breakout"></menuitem>
+		                 </menuitem>  
+		                 <menuitem label="Graphics" icon="myGraphics" >
+		                		<menuitem label="Gimp" icon="myWebBrowser" command="paint"></menuitem>
+		                 </menuitem> 
+						 <menuitem label="Internet" icon="myInternet" >
+								 <menuitem label="Web Browser" icon="myWebBrowser" command="browser"></menuitem>
+								 <menuitem label="XChat" icon="myXChat" command="irc"></menuitem>
+								
+						 </menuitem>
+						 <menuitem label="Office" icon="myOffice" ></menuitem>
+						 <menuitem label="Multimedia" icon="myMultimedia" >
+						 		<menuitem label="Video Player" icon="myVideoPlayer" command="vplayer"></menuitem>
+						 		<menuitem label="Rythmix" icon="myVideoPlayer" command="mp3"></menuitem> 
+						 </menuitem>
+						 
+	                 </root> 
+				   </mx:XML>
+	 	<mx:VBox id="cube" width="100%" height="100%" visible="false"
+        /> 	 
+        <mx:Box id="gl" direction="vertical" width="100%" height="100%" verticalGap="0" horizontalGap="0">
+		
+     	 <mx:HBox width="100%" height="20" styleName="topbar">	  
+     	 		<mx:HBox width="85%">              
+				 		<mx:HBox id="ApplicationBox" click="createAndShow(MenuList,ApplicationBox);" backgroundColor="#474642" >
+							<mx:Image id="ProgramsButton" source="{topIcon}" ></mx:Image>
+							<mx:Label text="Applications" id="applicationText" color="#dfd9d1"></mx:Label>	
+						</mx:HBox>
+						<mx:HBox id="placesBox" click="createAndShow(topMenu.PlacesList,placesBox);" backgroundColor="#474642" >	
+							<mx:Label text="Places" id="placesText" color="#dfd9d1"></mx:Label>	
+						</mx:HBox>					  
+								<mx:HBox id="systemBox" click="createAndShow(topMenu.SystemList,systemBox);" backgroundColor="#474642" >
+								<mx:Label text="System" id="systemText" color="#dfd9d1"></mx:Label>	
+							</mx:HBox>		  
+				</mx:HBox>	
+				
+				<mx:HBox id="Clock" width="15%" horizontalAlign="right">
+						<mx:Label text="clock" id="clock" color="#dfd9d1"></mx:Label>	
+				</mx:HBox>
+		</mx:HBox>
+		
+
+		
+		<SO:Workspace width="100%" height="100%" id="WorkSpace" verticalScrollPolicy="off" horizontalScrollPolicy="off" creationComplete="InitSO.desktopManager.init();"></SO:Workspace>
+
+ 	 	 <mx:HBox width="100%" height="20" styleName="downbar" verticalGap="0" horizontalGap="0" verticalAlign="middle" horizontalAlign="center">	                
+ 	 	 		
+ 	 	 		<mx:HBox width="25" horizontalAlign="center">
+ 	 	 			<mx:Image width="16" source="{myHideWindows}" ></mx:Image>
+ 	 	 		</mx:HBox>
+		 		<mx:HBox id="BottomPanel" width="100%" verticalGap="0" height="20" horizontalGap="0" verticalAlign="middle">
+					<mx:HorizontalList id="tbar" 
+							dataProvider="{SO.InitSO.taskBarItems}"  
+							rollOverColor="#b0a18b"  
+							paddingLeft="0"
+							columnCount="8"
+							paddingBottom="0"
+							paddingRight="0"
+							paddingTop="0"
+							bottom="0"
+							top="0"
+							selectionColor="#474642"
+							color="#dfd9d1"
+							width="100%"
+							 height="100%" 
+							 backgroundAlpha="1"
+							 click="restoreWindow(event)" 
+							 backgroundColor="#474642"
+						
+							 >
+							<mx:itemRenderer>
+						        <mx:Component>
+						        <mx:HBox verticalGap="0" height="20" horizontalGap="0" 
+						        		verticalAlign="middle" horizontalScrollPolicy="off" verticalScrollPolicy="off">
+						        			<mx:Image height="20" source="{data.icon}"  />
+						            		<mx:Label height="20" text="{data.label}" />
+						            </mx:HBox>
+						        </mx:Component>
+						    </mx:itemRenderer>
+							</mx:HorizontalList>
+				</mx:HBox>
+					<applets:DesktopManager id="desktopManager" height="20" width="15%"></applets:DesktopManager>		  
+					
+		</mx:HBox>
+	 
+	</mx:Box>
+</mx:Application>

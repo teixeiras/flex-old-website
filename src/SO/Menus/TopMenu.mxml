@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<mx:Box xmlns:mx="http://www.adobe.com/2006/mxml">
+	
+   	<mx:XML format="e4x" id="PlacesList">
+	 				<root>
+		                     <menuitem label="Home Folder" icon="myHome" command="homeFolder"></menuitem> 
+		                     <menuitem label="Desktop" icon="myDesktop" command="desktopFolder"></menuitem>
+		                     <menuitem label="Documents" icon="myFolderDocuments" command="DocumentsFolder"></menuitem>
+		                     <menuitem label="Music" icon="myFolderMusic" command="MusicFolder"></menuitem>
+	                 </root> 
+				   </mx:XML>
+				  	<mx:XML format="e4x" id="SystemList">
+	 				<root>
+	 					<menuitem label="Preferences" > 
+		                     <menuitem label="Change Background" icon="myBackground" command="ChangeBackground"></menuitem> 
+		               	</menuitem>  
+		                  
+	                 </root> 
+				   </mx:XML>         
+</mx:Box>

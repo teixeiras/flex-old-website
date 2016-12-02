@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<fx:WindowsBase xmlns:mx="http://www.adobe.com/2006/mxml" xmlns:fx="SO.Desktop.Window.*"
+	 xmlns="*" SizeX="400" SizeY="300"
+    xmlns:view="Plugins.games.Connect4.connect4.view.*"
+	initialize="onInitialize()" 
+	horizontalAlign="left"
+	width="100%" height="100%">
+	<mx:Script>
+		<![CDATA[
+    import mx.effects.SoundEffect;
+	import Plugins.games.Connect4.connect4.model.*;
+	import Plugins.games.Connect4.connect4.view.*;
+	
+	
+		[Bindable]
+	public var game:Game;
+	
+	/* initialize the Game we're playing. */
+	private function onInitialize():void
+	{
+	    game = new Game();
+	}
+
+	private function updateLookahead(depth:Number):void
+	{
+	    game.lookahead = depth;
+	    game.updateState();   // force redisplay/recalc of positional scoring
+	}
+    [Bindable]
+	[Embed(source="sounds/release.mp3")]
+	private var releaseSound:Class;
+	 
+	/** Reset the game and play an appropriate sound effect. */
+	private function resetGame():void
+	{
+        game.initializeGame();
+        
+        var sfx:SoundEffect = new SoundEffect();
+        sfx.source = releaseSound;
+        sfx.useDuration = false;
+        sfx.play([this]);
+	}
+	
+	]]>
+	</mx:Script>
+	
+	<mx:Style source="Connect4.css"/>
+    <mx:HDividedBox width="100%" height="100%">
+        <view:GameStateView id="stateView" game="{game}"/>
+        <mx:VBox width="100%" height="100%">
+            <mx:Label text="Strength:"/>
+            <mx:NumericStepper id="depthStepper" value="4" change="updateLookahead(depthStepper.value)"/>
+            <mx:CheckBox id="autoMove" label="Respond to Moves"
+                selected="{stateView.autoMove}" click="stateView.autoMove=autoMove.selected"/>
+            <mx:CheckBox id="showAnalysis" label="Show Analysis" 
+                selected="{stateView.showAnalysis}" click="stateView.showAnalysis = showAnalysis.selected"/>
+            <mx:Button label="My Best Move" click="game.playBestMove()" width="129" height="30"/>
+            <mx:Button label="Take That Back" click="game.retractMove()" height="30" width="129"/>
+            <mx:Button label="New Game" click="resetGame()" width="129" height="60"/>
+        </mx:VBox>
+    </mx:HDividedBox>
+</fx:WindowsBase>

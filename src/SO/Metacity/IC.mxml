@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:VBox xmlns:mx="http://www.adobe.com/2006/mxml" width="70" height="100%" horizontalAlign="center"
+	click="mouse_click()" rollOver="mouse_over()" rollOut="mouse_out()">
+	    <mx:Glow id="glowImage" duration="100"
+            alphaFrom="0" alphaTo="1"
+            blurXFrom="0.0" blurXTo="30.0" 
+            blurYFrom="0.0" blurYTo="30.0"  strength="2"
+            color="0xFFFFFF" target="{this}"/>
+	<mx:Script>
+		<![CDATA[
+			import mx.controls.Label;
+			import mx.controls.Image;
+			import mx.controls.Alert;
+			[Bindable]
+			public var ico:Image;
+			public function Init(texto:String, Ico:Class):void
+			{
+				ico=new Image();		
+				ico.source=Ico;
+				ico.width=32;
+				ico.height=32;
+				
+				
+				this.addChild(ico);
+				var Name:Label= new Label();
+				Name.text=texto;
+				Name.percentWidth=100;
+				Name.setStyle("textAlign","center");
+				this.addChild(Name);
+				
+			}
+			public function mouse_over():void
+			{
+				//this.setStyle("backgroundColor","red");
+				glowImage.play();
+			}
+			public function mouse_out():void
+			{
+				//this.setStyle("backgroundColor","none");
+			
+				this.filters = [];
+				
+			}
+			public function mouse_click():void
+			{
+			
+			}
+		]]>
+	</mx:Script>
+	
+	
+</mx:VBox>

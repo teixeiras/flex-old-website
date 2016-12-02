@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Box xmlns:mx="http://www.adobe.com/2006/mxml">
+<mx:XML format="e4x" id="MenuList" >
+	 				<root>
+		                 <menuitem label="Menu A">  
+		                     <menuitem label="SubMenu A1" type="check"></menuitem> 
+		                     <menuitem label="SubMenu A2" type="check"></menuitem>  
+		                 </menuitem>  
+		                 <menuitem label="Menu B"></menuitem>  
+		                 <menuitem label="Menu C">
+		                     <menuitem label="SubMenu C1" type="radio" groupname="smgroup"></menuitem>  
+		                     <menuitem label="SubMenu C2" type="radio" groupname="smgroup"></menuitem>
+		                     <menuitem label="SubMenu C3" type="radio" groupname="smgroup"></menuitem>  
+		                 </menuitem> 
+	                 </root> 
+ </mx:XML>
+</mx:Box>

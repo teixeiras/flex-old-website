@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<flexlib:MDICanvas xmlns:mx="http://www.adobe.com/2006/mxml" width="100%" height="100%" xmlns:flexlib="http://code.google.com/p/flexlib/"  creationComplete="Init()">
+	<mx:Script>
+		<![CDATA[
+			import mx.events.DragEvent;
+			import mx.managers.DragManager;
+			import mx.core.DragSource;
+			import mx.core.IUIComponent;
+			import SO.Metacity.IC;
+			import mx.controls.Alert;
+			[Bindable]
+			[Embed(source='icons/folders-music.png')]
+			public var myFolderMusic:Class;
+			import mx.controls.Image;
+			import mx.containers.GridItem;
+			import mx.containers.GridRow;
+			import mx.containers.Grid;
+			public var icons:Grid=new Grid();
+			public function Init():void
+			{
+				this.addChild(icons);
+				icons.percentHeight=100;
+				icons.percentWidth=100;
+				for(var i:uint=0;i<9;i++)
+					icons.addChild(new GridRow());
+				for each (var row:GridRow in icons.getChildren())
+					for(i=0;i<12;i++)
+						row.addChild(new GridItem());
+				for each ( row in icons.getChildren())
+					for each (var item:GridItem in GridRow(row).getChildren())
+						{
+								item.percentHeight=100;
+								item.percentWidth=100;
+								row.percentHeight=100;
+								row.percentWidth=100;
+								item.setStyle("backgroundColor","none");
+								item.addEventListener( DragEvent.DRAG_ENTER, acceptDrop );
+								item.addEventListener( DragEvent.DRAG_DROP, handleDrop );
+						
+						}
+						var ico:IC=new IC();
+						ico.Init("teste",myFolderMusic);
+						this.addIcon(ico,2,2);	
+						ico.addEventListener( MouseEvent.MOUSE_DOWN, beginDrag );
+      
+ 
+      
+				
+			}
+		   public function beginDrag( mouseEvent:MouseEvent ):void
+		   {
+		      var dragInitiator:IUIComponent = mouseEvent.currentTarget as IUIComponent;
+		      var dragSource:DragSource = new DragSource();
+		      dragSource.addData(mouseEvent.currentTarget,"ico");
+		      DragManager.doDrag( dragInitiator, dragSource, mouseEvent, null );
+		   }
+		   public function acceptDrop( dragEvent:DragEvent ):void
+		   {
+		      var dropTarget:IUIComponent = dragEvent.currentTarget as IUIComponent;
+		      var dragSource:DragSource = dragEvent.dragSource;
+		      
+		      if( dragSource.hasFormat( "ico" ) )
+		      {
+			      DragManager.acceptDragDrop( dropTarget );
+			      DragManager.showFeedback( DragManager.COPY);
+		      }
+		   }
+		
+			public function handleDrop( dragEvent:DragEvent ):void
+		   {
+		      var dragInitiator:IUIComponent = dragEvent.dragInitiator;
+		      var dropTarget:IUIComponent = dragEvent.currentTarget as IUIComponent;
+		      GridItem(dropTarget).addChild(IC(dragInitiator));
+		      
+		   }
+
+
+			public function addIcon(Shortcut:IC,x:uint,y:uint):void
+			{
+				GridItem(GridRow(icons.getChildAt(x)).getChildAt(y)).addChild( Shortcut );
+				
+			}
+		]]>
+	</mx:Script>
+	
+</flexlib:MDICanvas>

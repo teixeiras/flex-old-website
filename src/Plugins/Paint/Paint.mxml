@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<fx:WindowsBase xmlns:mx="http://www.adobe.com/2006/mxml" xmlns:fx="SO.Desktop.Window.*" width="100%" height="100%"
+	SizeX="300" SizeY="300">
+
+  <mx:Script>
+  import mx.graphics.codec.PNGEncoder;
+  </mx:Script>
+
+  <mx:Boolean id="isDrawing">false</mx:Boolean>
+
+  <mx:int id="x1"/>
+  <mx:int id="y1"/>
+  <mx:int id="x2"/>
+  <mx:int id="y2"/>
+
+  <mx:uint id="drawColor"/>
+
+  <mx:Panel title="FlexPaint" width="100%" height="100%">
+
+    <mx:Canvas id="canvas" width="100%" height="100%" horizontalScrollPolicy="off" verticalScrollPolicy="off">
+      <mx:mouseDown>
+      x1 = canvas.mouseX;
+      y1 = canvas.mouseY;
+      isDrawing = true;
+      </mx:mouseDown>
+      <mx:mouseMove>
+      x2 = canvas.mouseX;
+      y2 = canvas.mouseY;
+      if (isDrawing)
+      {
+        canvas.graphics.lineStyle(2, drawColor);
+        canvas.graphics.moveTo(x1, y1);
+        canvas.graphics.lineTo(x2, y2);
+        x1 = x2;
+        y1 = y2;
+      }
+      </mx:mouseMove>
+      <mx:mouseUp>
+      isDrawing = false;
+      </mx:mouseUp>
+    </mx:Canvas>
+
+    <mx:ControlBar>
+      <mx:ColorPicker change="drawColor = event.target.selectedColor"/>
+      <mx:Button label="Erase">
+        <mx:click>
+        canvas.graphics.clear();
+        </mx:click>
+      </mx:Button>
+      <mx:Button label="Save Image">
+        <mx:click>
+        var bd:BitmapData = new BitmapData(canvas.width,canvas.height);
+        bd.draw(canvas);
+  
+        var ba:ByteArray = (new PNGEncoder()).encode(bd);
+        
+       // (new FileReference()).save(ba, "doodle.png");
+        </mx:click>
+      </mx:Button>
+    </mx:ControlBar>
+  </mx:Panel>
+
+</fx:WindowsBase>

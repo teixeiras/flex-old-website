@@ -1,0 +1,166 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" xmlns="Plugins.games.Connect4.connect4.view.*"
+    creationComplete="onCreationComplete()">
+	<mx:Script>
+		<![CDATA[
+			import Plugins.games.Connect4.connect4.model.Game;
+			import mx.core.UIComponent;
+			import Plugins.games.Connect4.connect4.model.*;
+	
+			
+public static const CELL_SIZE:uint = 30;
+public static const CELL_GAP:uint = 2;
+public static const CELL_GRID:uint = CELL_SIZE + CELL_GAP;
+
+// Our Game
+private var _game:Game;
+
+// all cell views, not in any particular order
+private var _cellViews:Array;
+
+// flag enabling display of positional scoring analysis
+private var _showAnalysis:Boolean = false;
+
+/** Flag controlling auto-move response to human player */
+[Bindable]
+public var autoMove:Boolean = true;
+
+public function get game():Game
+{
+    return _game;
+}
+
+public function set game(g:Game):void
+{
+    _game = g;
+    
+    // When game is initialized (which only happens once),
+    // listen for significant events coming from it.
+    //
+    _game.addEventListener(Game.STATE_CHANGED, updateStateView);
+    _game.addEventListener(Game.TOKEN_PLACED, tokenPlaced);
+}
+
+[Bindable("showAnalysisChange")]
+public function get showAnalysis():Boolean
+{
+	return _showAnalysis;
+}
+
+public function set showAnalysis(f:Boolean):void
+{
+	_showAnalysis = f;
+	game.updateState();
+	dispatchEvent(new Event("showAnalysisChange"));
+}
+
+/** Make a move in some column, if legal. */
+private function makeMove(col:int):void
+{
+    // turn off scoring hints if autoMove is on
+	if (autoMove)
+	{
+        showAnalysis = false;
+    }
+    
+    // Have the Game update itself with respect to this move
+    game.playColumn(col);
+    
+    // flag this move as an autoMove so we'll respond to it later
+	if (!game.state.win)
+	{
+	    game.state.autoMove = autoMove;
+    }
+}
+
+/**
+ * Respond to actual placement of a token by autoMoving if needed.
+ * This is handled via an event separate from the game state change,
+ * because it happens after the animation effect of a move has completed.
+ */
+private function tokenPlaced(e:Event):void
+{
+	if (game.state.autoMove)
+	{
+	    updateStateView(e);
+
+	    // kick off a timer before playing so that we'll have
+	    // time to reflect the last screen update before the next CPU-bound move.
+		var t:Timer = new Timer(100, 1);
+		t.addEventListener(TimerEvent.TIMER, function(e:Event):void { game.playBestMove(); });
+		t.start();
+	}
+}
+
+/**
+ * Refresh the view of the overall game state in response to some change.
+ */
+public function updateStateView(e:Event):void
+{
+	if (_game.state.win)
+	{
+		scoreLabel.text = "GAME OVER: " + Game.PLAYER_NAMES[_game.state.player] + " WINS";
+		scoreLabel.setStyle("color", Game.PLAYER_COLORS[_game.state.player]);
+	}
+	else
+	{
+        var actionText:String = _game.state.autoMove ? " thinking..." : " to play";
+		scoreLabel.text = Game.PLAYER_NAMES[1 - _game.state.player] + actionText;
+		scoreLabel.setStyle("color", Game.PLAYER_COLORS[1-_game.state.player]);
+	}
+}
+
+/**
+ * We're done creating our MXML kids; create additional GameCellViews
+ * to show each cell in the current game state.  The cells go into
+ * a special layer that's sandwiched between the two CellMasks that
+ * visually comprise the token frame.
+ */
+private function onCreationComplete():void
+{
+	_cellViews = [];
+	for (var row:int = Game.ROWS - 1; row >= 0; row--)
+	{
+		for (var column:int = 0; column < Game.COLUMNS; column++)
+		{
+			var gcv:GameCellView = new GameCellView();
+			gcv.row = row;
+			gcv.column = column;
+			gcv.x = column * CELL_GRID + CELL_GAP;
+			gcv.y = (Game.ROWS - row - 1) * CELL_GRID + CELL_GAP;
+			gcv.stateView = this;
+			gcv.game = game;
+			
+			cellLayer.addChild(gcv);
+			_cellViews.push(gcv);
+			
+			// listen for cell clicks and handle them by making a move
+			var listener:Function = function(e:MouseEvent):void {
+				var view:GameCellView = e.currentTarget as GameCellView;
+				makeMove(view.column);
+			};
+			gcv.addEventListener(MouseEvent.CLICK, listener);
+		}
+	}
+}
+
+		]]>
+	</mx:Script>
+	
+	<!-- backdrop color behind playing grid -->
+	<mx:Canvas width="{Game.COLUMNS*CELL_GRID}"
+	           height="{Game.ROWS*CELL_GRID}"
+	           backgroundColor="#333333"/>
+	           
+    <!-- offset back plane of token holder -->
+	<CellMask x="3" y="3" maskColor="#000000"/>
+	
+	<!-- display plane for tokens -->
+	<mx:Canvas id="cellLayer"/>
+	
+	<!-- front plane of token holder -->
+	<CellMask maskColor="#0000FF"/>
+	
+	<mx:Label id="scoreLabel" color="{Game.PLAYER_COLORS.getIteamAt(Game.RED)}"
+	     fontSize="36" y="{Game.ROWS*CELL_GRID + CELL_GAP + 10}" text="Red to play"/>
+</mx:Canvas>

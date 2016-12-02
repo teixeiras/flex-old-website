@@ -1,0 +1,119 @@
+<?xml version="1.0"?>
+<!-- mxml\HellowWorld.mxml -->
+<fx:WindowsBase xmlns:mx="http://www.adobe.com/2006/mxml" xmlns:fx="SO.Desktop.Window.*" width="100%" height="100%" 
+	creationComplete="doInit()"  frameRate="60"  SizeX="300" SizeY="300">
+    <mx:Script><![CDATA[
+    	import flash.events.Event;
+        import mx.core.mx_internal;
+        import mx.controls.Alert;
+        import flash.utils.Timer;
+        import flash.events.TimerEvent;
+        import flash.events.KeyboardEvent;
+        import flash.events.Event;
+        import Plugins.games.tetris.lib.*;
+      
+        internal var gameModel      : GameModel      = new GameModel();
+        internal var gameMaster     : GameMaster     = new GameMaster();
+        internal var gamePainter    : GamePainter    = new GamePainter();
+        internal var playerControls : PlayerControls = new PlayerControls();
+
+        //internal var blockSize  : int = 10;
+        internal var frameNo    : int =  0;
+        internal var gameStarted: Boolean = false;
+        internal var gamePaused : Boolean = false;
+
+        public function gameIteration(event : Event) : void{
+            if(!gameStarted) return;
+            if(gamePaused)   return;
+            frameNo++;
+
+            gameMaster.doGameMasterActions(frameNo);
+            if(gameMaster.gameOver){
+                gameStarted = false;
+                Alert.show("Game Over!!!");
+            }
+        }
+
+
+        public function onKeyDown(event : KeyboardEvent) : void {
+            if(gamePaused && event.keyCode != 80 && event.keyCode != 68) return;
+
+            if(event.keyCode == 13) {
+                newGame();
+                return;
+            }
+            if(!gameStarted) return;
+
+            if(event.keyCode == 37) {
+                playerControls.tryMoveLeft(gameModel.block,  gameModel.board);
+
+            } else
+            if(event.keyCode == 39){
+                playerControls.tryMoveRight(gameModel.block, gameModel.board);
+            } else
+            if(event.keyCode == 38){
+                playerControls.tryRotate(-1, gameModel.block, gameModel.board);
+            } else
+            if(event.keyCode == 40){
+                playerControls.tryRotate(1, gameModel.block, gameModel.board);
+            } else
+            if(event.keyCode == 32){
+                if(!gameMaster.moveDownCollision()){
+                  gameModel.block.yPos++;
+                }    
+            } else
+            if(event.keyCode == 68){
+                gamePainter.debugMode = ! gamePainter.debugMode;
+                gamePainter.drawBoard(gameModel.board);
+            } else
+            if(event.keyCode == 80){
+               if(gamePaused) gamePaused = false;
+               else           gamePaused = true;
+            }
+
+            gamePainter.drawBlock(gameModel.block);
+            //Alert.show(new String(event.keyCode));
+        }
+
+        public  function doInit() : void{
+            gameModel.board = new Board(16,  24);
+            gameMaster.gameModel   = gameModel;
+            gameMaster.gamePainter = gamePainter;
+            gamePainter.boardGraphics = gameBoard.graphics;
+            gamePainter.blockGraphics = block.graphics;
+            gamePainter.scoreLabel    = scoreLabel;
+            gamePainter.drawBoard(gameModel.board);
+
+
+            stage.addEventListener(KeyboardEvent.KEY_DOWN, onKeyDown);
+            stage.addEventListener(Event.ENTER_FRAME, gameIteration);
+        }
+
+        public function newGame() : void {
+            gameModel.block = Block.newBlock();
+            gameModel.board.clear();
+            gameModel.score = 0;
+            gamePainter.drawScore(gameModel.score);
+            gameBoard.setFocus();
+            gameMaster.gameOver = false;
+            gamePainter.drawBoard(gameModel.board);
+            gameStarted = true;
+
+        }
+    ]]></mx:Script>
+
+
+    <mx:HDividedBox  width="100%">
+      <mx:Canvas width="60%" height="100%">
+        <mx:Canvas id="gameBoard" y="0" x="0"/>
+        <mx:Canvas id="block"     y="0" x="0"/>
+      </mx:Canvas>
+      <mx:VBox width="40%" height="100%">
+          <mx:Label id="scoreLabel" text="Score: 0"/>
+       	  <mx:Button click="newGame()" label="Restart"/>
+       </mx:VBox>
+    </mx:HDividedBox>
+</fx:WindowsBase>
+
+
+        
